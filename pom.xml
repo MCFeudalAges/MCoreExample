@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.mcfeudalages</groupId>
 	<artifactId>mcore</artifactId>
-	<version>6.9.1T</version>
+	<version>6.9.1</version>
 
 	<repositories>
 		<repository>
