@@ -172,19 +172,20 @@ public class Txt
 	}
 	
 	// -------------------------------------------- //
-	// Wrapping the Craftbukkit TextWrapper
+	// SPLIT AT LINEBREAKS
 	// -------------------------------------------- //
+	
 	public static ArrayList<String> wrap(final String string)
 	{
-		return wrap(Arrays.asList(string.split("\\r?\\n")));
+		return new ArrayList<String>(Arrays.asList(string.split("\\r?\\n")));
 	}
 	
 	public static ArrayList<String> wrap(final Collection<String> strings)
 	{
 		ArrayList<String> ret = new ArrayList<String>();
-		for (String line : strings)
+		for (String string : strings)
 		{
-			ret.addAll(Arrays.asList(TextWrapper.wrapText(line)));
+			ret.addAll(wrap(string));
 		}
 		return ret;
 	}
@@ -416,16 +417,7 @@ public class Txt
 	
 	public static ArrayList<String> getPage(List<String> lines, int pageHumanBased, String title, CommandSender sender)
 	{
-		int pageheight;
-		if (sender instanceof Player)
-		{
-			pageheight = PAGEHEIGHT_PLAYER;
-		}
-		else
-		{
-			pageheight = PAGEHEIGHT_CONSOLE;
-		}
-		return getPage(lines, pageHumanBased, title, pageheight);
+		return getPage(lines, pageHumanBased, title, (sender instanceof Player) ? Txt.PAGEHEIGHT_PLAYER : Txt.PAGEHEIGHT_CONSOLE);
 	}
 	
 	public static ArrayList<String> getPage(List<String> lines, int pageHumanBased, String title, int pageheight)
@@ -495,6 +487,42 @@ public class Txt
 		}
 		
 		return ret;
+	}
+	
+	// -------------------------------------------- //
+	// "SMART" QUOTES
+	// -------------------------------------------- //
+	// The quite stupid "Smart quotes" design idea means replacing normal characters with mutated UTF-8 alternatives.
+	// The normal characters look good in Minecraft.
+	// The UFT-8 "smart" alternatives look quite bad.
+	// http://www.fileformat.info/info/unicode/block/general_punctuation/list.htm
+	
+	public static String removeSmartQuotes(String string)
+	{
+		if (string == null) return null;
+		
+		// LEFT SINGLE QUOTATION MARK
+		string = string.replace("\u2018", "'");
+		
+		// RIGHT SINGLE QUOTATION MARK
+		string = string.replace("\u2019", "'");
+		
+		// LEFT DOUBLE QUOTATION MARK
+		string = string.replace("\u201C", "\"");
+		
+		// RIGHT DOUBLE QUOTATION MARK
+		string = string.replace("\u201D", "\"");
+		
+		// ONE DOT LEADER
+		string = string.replace("\u2024", ".");
+		
+		// TWO DOT LEADER
+		string = string.replace("\u2025", "..");
+		
+		// HORIZONTAL ELLIPSIS
+		string = string.replace("\u2026", "...");
+
+		return string;
 	}
 	
 	// -------------------------------------------- //
