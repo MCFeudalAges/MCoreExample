@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -13,6 +14,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.bukkit.plugin.Plugin;
 
+import com.massivecraft.mcore.HashCodeComparator;
 import com.massivecraft.mcore.MCore;
 import com.massivecraft.mcore.MPlugin;
 import com.massivecraft.mcore.NaturalOrderComparator;
@@ -222,6 +224,23 @@ public class Coll<E> implements CollInterface<E>
 			
 			eto.load(efrom);
 			eto.setCustomData(efrom.getCustomData());
+		}
+		else if (ofrom instanceof JsonObject)
+		{
+			JsonObject jfrom = (JsonObject)ofrom;
+			JsonObject jto = (JsonObject)oto;
+			// Clear To
+			Iterator<Entry<String, JsonElement>> iter = jto.entrySet().iterator();
+			while (iter.hasNext())
+			{
+				iter.next();
+				iter.remove();
+			}
+			// Copy
+			for (Entry<String, JsonElement> entry : jfrom.entrySet())
+			{
+				jto.add(entry.getKey(), entry.getValue());
+			} 
 		}
 		else
 		{
@@ -522,6 +541,7 @@ public class Coll<E> implements CollInterface<E>
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public synchronized void loadFromRemote(Object oid)
 	{
@@ -550,11 +570,21 @@ public class Coll<E> implements CollInterface<E>
 		Long mtime = entry.getValue();
 		if (mtime == null) return;
 		
+		// Calculate temp but handle raw cases.
+		E temp = null;
+		if (this.getEntityClass().isAssignableFrom(JsonObject.class))
+		{
+			temp = (E) raw;
+		}
+		else
+		{
+			temp = this.getGson().fromJson(raw, this.getEntityClass());
+		}
 		E entity = this.get(id, false);
 		if (entity != null)
 		{
 			// It did already exist
-			this.copy(this.getGson().fromJson(raw, this.getEntityClass()), entity);
+			this.copy(temp, entity);
 		}
 		else
 		{
@@ -562,7 +592,7 @@ public class Coll<E> implements CollInterface<E>
 			entity = this.createNewInstance();
 			
 			// Copy over data first
-			this.copy(this.getGson().fromJson(raw, this.getEntityClass()), entity);
+			this.copy(temp, entity);
 			
 			// Then attach!
 			this.attach(entity, oid, false);
@@ -798,6 +828,11 @@ public class Coll<E> implements CollInterface<E>
 		this.collDriverObject = db.getCollDriverObject(this);
 		
 		// STORAGE
+		if (entityComparator == null && !Comparable.class.isAssignableFrom(entityClass))
+		{
+			// Avoid "Classname cannot be cast to java.lang.Comparable" error in ConcurrentSkipListMap
+			entityComparator = HashCodeComparator.get();
+		}
 		this.ids = new ConcurrentSkipListSet<String>(idComparator);
 		this.id2entity = new ConcurrentSkipListMap<String, E>(idComparator);
 		this.entity2id = new ConcurrentSkipListMap<E, String>(entityComparator);

@@ -49,10 +49,19 @@ public abstract class MPlugin extends JavaPlugin implements Listener
 		log(Txt.parse("=== ENABLE <g>COMPLETE <i>(Took <h>"+(System.currentTimeMillis()-timeEnableStart)+"ms<i>) ==="));
 	}
 	
+	@Override
+	public void onEnable()
+	{
+		if (!this.preEnable()) return;
+		
+		this.postEnable();
+	}
+	
 	// -------------------------------------------- //
 	// DISABLE
 	// -------------------------------------------- //
 	
+	@Override
 	public void onDisable()
 	{
 		// Collection shutdowns.
